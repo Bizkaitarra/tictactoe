@@ -3,11 +3,14 @@
 namespace App\Command;
 
 use App\Domain\Board;
+use App\Domain\Player;
+use App\Infrastructure\HumanPlayer;
+use App\Infrastructure\RandomPlayer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\Question;
+use Symfony\Component\Console\Question\ChoiceQuestion;
 
 #[AsCommand(name: 'app:tic-tac-toe')]
 final class TicTacToeCommand extends Command
@@ -23,14 +26,28 @@ final class TicTacToeCommand extends Command
     {
         $output->writeln('Welcome to Tic Tac Toe!');
 
+        $helper = $this->getHelper('question');
+
+        $player1 = $this->choosePlayerType($input, $output, 1);
+        $player2 = $this->choosePlayerType($input, $output, 2);
+
         $output->writeln('First player will play with X and second one with O');
 
         $output->writeln('GO!');
 
-        $board = new Board();
+        $board = new Board($player1, $player2);
         while (!$board->isFinished()) {
+            $currentPlayerSymbol = $board->turn();
+            $output->writeln('Player with symbol ' . $currentPlayerSymbol . ' turn');
             $this->drawBoard($output, $board->getBoard());
-            $this->playerTurn($input, $output, $board);
+            $position = $board->move();
+            $output->writeln(
+                sprintf(
+                    "Player with symbol %s puts in position %s",
+                    $currentPlayerSymbol,
+                    $position
+                )
+            );
         }
 
         $this->drawBoard($output, $board->getBoard());
@@ -45,29 +62,25 @@ final class TicTacToeCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function playerTurn(InputInterface $input, OutputInterface $output, Board $board): void
+    private function choosePlayerType(
+        InputInterface $input,
+        OutputInterface $output,
+        int $playerNumber
+    ): Player
     {
-        $output->writeln('Enter the position you want to place your mark (0-8)');
-
-        while (true) {
-            $helper = $this->getHelper('question');
-            $question = new Question('Please enter a number between 0 and 8: ');
-
-            $number = $helper->ask($input, $output, $question);
-
-            // Verificar que el número esté entre 0 y 8
-            if (!is_numeric($number) || $number < 0 || $number > 8) {
-                $output->writeln('<error>The number must be between 0 and 8.</error>');
-                continue;
-            }
-            if ($board->isAlreadyFilled((int) $number)) {
-                $output->writeln('<error>The position must be empty.</error>');
-                continue;
-            }
-            break;
-
-        }
-        $board->addMove((int) $number);
+        $helper = $this->getHelper('question');
+        $question = new ChoiceQuestion(
+            'Who is going to play as player '.$playerNumber.'? (defaults human)',
+            ['Human', 'Random'],
+            0
+        );
+        $question->setErrorMessage('Option %s is invalid.');
+        $playerType = $helper->ask($input, $output, $question);
+        return match ($playerType) {
+            'Human' => new HumanPlayer($input, $output, $helper),
+            'Random' => new RandomPlayer(),
+            default => throw new \RuntimeException('Invalid player type'),
+        };
     }
 
     private function drawBoard(OutputInterface $output, string $boardString): void

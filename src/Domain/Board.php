@@ -19,6 +19,12 @@ final class Board
             [0, 4, 8], [2, 4, 6] // Diagonal
         ];
 
+    public function __construct(private readonly Player $player1, private readonly Player $player2)
+    {
+        $this->player1->setSymbol(self::PLAYER_1);
+        $this->player2->setSymbol(self::PLAYER_2);
+    }
+
     public function getWinner(): ?string {
         foreach ($this->winningPositions as $winningPosition) {
             if (in_array($this->board[$winningPosition[0]], [self::PLAYER_1, self::PLAYER_2]) &&
@@ -36,13 +42,17 @@ final class Board
         return $allPositionsFilled  || $this->getWinner() !== self::DRAW;
     }
 
-    public function addMove(int $position): void {
-        $this->board[$position] = $this->turn;
+    public function move(): int {
         if ($this->turn === self::PLAYER_1) {
+            $position = $this->player1->getMove($this);
+            $this->board[$position] = $this->turn;
             $this->turn = self::PLAYER_2;
-        } else {
-            $this->turn = self::PLAYER_1;
+            return $position;
         }
+        $position = $this->player2->getMove($this);
+        $this->board[$position] = $this->turn;
+        $this->turn = self::PLAYER_1;
+        return $position;
     }
 
     public function turn(): string
