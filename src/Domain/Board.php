@@ -19,11 +19,6 @@ final class Board
             [0, 4, 8], [2, 4, 6] // Diagonal
         ];
 
-    public function isFinished(): bool {
-        $allPositionsFilled = !str_contains($this->board, '-');
-        return $allPositionsFilled  || $this->getWinner() !== self::DRAW;
-    }
-
     public function getWinner(): ?string {
         foreach ($this->winningPositions as $winningPosition) {
             if (in_array($this->board[$winningPosition[0]], [self::PLAYER_1, self::PLAYER_2]) &&
@@ -34,6 +29,11 @@ final class Board
             }
         }
         return self::DRAW;
+    }
+
+    public function isFinished(): bool {
+        $allPositionsFilled = !str_contains($this->board, '-');
+        return $allPositionsFilled  || $this->getWinner() !== self::DRAW;
     }
 
     public function addMove(int $position): void {
