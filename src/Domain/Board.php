@@ -10,6 +10,8 @@ final class Board
 
     private string $board = '---------';
 
+    private array $moves = [];
+
     private string $turn = self::PLAYER_1;
 
     private array $winningPositions =
@@ -23,6 +25,7 @@ final class Board
     {
         $this->player1->setSymbol(self::PLAYER_1);
         $this->player2->setSymbol(self::PLAYER_2);
+        $this->moves[] = $this->board;
     }
 
     public function getWinner(): ?string {
@@ -46,11 +49,13 @@ final class Board
         if ($this->turn === self::PLAYER_1) {
             $position = $this->player1->getMove($this);
             $this->board[$position] = $this->turn;
+            $this->moves[] = $this->board;
             $this->turn = self::PLAYER_2;
             return $position;
         }
         $position = $this->player2->getMove($this);
         $this->board[$position] = $this->turn;
+        $this->moves[] = $this->board;
         $this->turn = self::PLAYER_1;
         return $position;
     }
@@ -68,5 +73,10 @@ final class Board
     public function isAlreadyFilled(int $number): bool
     {
         return in_array($this->board[$number], [self::PLAYER_1, self::PLAYER_2]);
+    }
+
+    public function getMoves(): array
+    {
+        return $this->moves;
     }
 }

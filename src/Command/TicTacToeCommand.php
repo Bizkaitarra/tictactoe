@@ -26,8 +26,6 @@ final class TicTacToeCommand extends Command
     {
         $output->writeln('Welcome to Tic Tac Toe!');
 
-        $helper = $this->getHelper('question');
-
         $player1 = $this->choosePlayerType($input, $output, 1);
         $player2 = $this->choosePlayerType($input, $output, 2);
 
@@ -69,18 +67,7 @@ final class TicTacToeCommand extends Command
     ): Player
     {
         $helper = $this->getHelper('question');
-        $question = new ChoiceQuestion(
-            'Who is going to play as player '.$playerNumber.'? (defaults human)',
-            ['Human', 'Random'],
-            0
-        );
-        $question->setErrorMessage('Option %s is invalid.');
-        $playerType = $helper->ask($input, $output, $question);
-        return match ($playerType) {
-            'Human' => new HumanPlayer($input, $output, $helper),
-            'Random' => new RandomPlayer(),
-            default => throw new \RuntimeException('Invalid player type'),
-        };
+        return CommandHelper::choosePlayerType($input, $output, $helper, 'Who is going to play as player '.$playerNumber.'? (defaults human)');
     }
 
     private function drawBoard(OutputInterface $output, string $boardString): void
